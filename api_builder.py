@@ -1,7 +1,6 @@
-import json
-from os import times
-import requests
-import math
+from json import loads
+from requests import get
+from math import ceil
 from random import choice
 from alive_progress import alive_bar
 
@@ -49,14 +48,14 @@ def get_user_agent():
 
 def json_transfor(json_str):
     try:
-        return json.loads(json_str.encode("utf-8").decode("latin1"))
+        return loads(json_str.encode("utf-8").decode("latin1"))
     except:
         print("ERROR JSON:")
         print(json_str)
 
 def send_and_get_http(url, headers):
     try:
-        return requests.get(url, headers=headers).text
+        return get(url, headers=headers).text
     except:
         print("EORROR URL")
         print(headers)
@@ -87,7 +86,7 @@ def get_cid_list(bvid):
 def get_user_cid_bvid(mid):
     cid_bvid = {}
     page_size = 30
-    page_total = math.ceil(get_video_total_num(mid)/page_size)
+    page_total = ceil(get_video_total_num(mid)/page_size)
     for page_num in range(page_total):
         url = "https://api.bilibili.com/x/space/arc/search?mid={0}&ps={1}&tid=0&pn={2}".format(mid, str(page_size),str(page_num+1))
         page_video_info = json_transfor(send_and_get_http(url, headers = get_http_header()))
@@ -101,8 +100,8 @@ def download_single_video(bvid, order, url, size):
     headers = get_http_header()
     headers['referer'] = 'https://www.bilibili.com'
     print("Start downloading" + bvid )
-    chunk_total = math.ceil(size/512)
-    r = requests.get(url,headers = headers, stream = True) 
+    chunk_total = ceil(size/512)
+    r = get(url,headers = headers, stream = True) 
     f = open(bvid + str(order) + ".flv", "wb")
     with alive_bar(chunk_total) as bar:
         for chunk in r.iter_content(chunk_size = 512):
