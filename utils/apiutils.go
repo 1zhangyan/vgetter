@@ -1,8 +1,9 @@
-package httputils
+package utils
 
 import (
 	"container/list"
 	"errors"
+	"fmt"
 	"github.com/buger/jsonparser"
 	"github.com/schollz/progressbar/v3"
 	"io"
@@ -10,7 +11,6 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"path"
 	"reflect"
 	"strconv"
 )
@@ -170,11 +170,10 @@ func GetUserAllVideos(mid string) (*list.List , error){
 }
 
 func DownloadVideo(durl string, name string)(error){
-	dir, err := os.Executable()
+	curDir, err := GetCurrentDir()
 	if err != nil {
 		return err
 	}
-	curDir,_ := path.Split(dir)
 	filePath := curDir + "/" + name + ".flv"
 	file,err := os.Create(filePath)
 	if err != nil {
@@ -196,6 +195,7 @@ func DownloadVideo(durl string, name string)(error){
 
 	defer respon.Body.Close()
 	bar:= progressbar.DefaultBytes(respon.ContentLength,"正在下载" , name)
+	bar.Clear()
 	_,err = io.Copy(io.MultiWriter(file,bar), respon.Body)
 	if err != nil{
 		return err
@@ -224,12 +224,16 @@ func DownloadUserAllVideos(mid string) error{
 		}
 		cids,err := getCidByBvid(videoInfo.bvid)
 		if err != nil {
-			return err
+			fmt.Println(mid + "Get CID WRONG: bvid is " + videoInfo.bvid )
+			fmt.Println(err.Error())
+			return nil
 		}
 		for cid:= cids.Front(); cid!= nil; cid = cid.Next(){
 			videoDownloadInfos,err := GetVideoDownloadInfos(videoInfo.bvid, cid.Value.(string))
 			if err != nil {
-				return err
+				fmt.Println(mid + "GetVideoDownloadInfos WRONG: bvid is " + videoInfo.bvid + " cid is "+  cid.Value.(string) )
+				fmt.Println(err.Error())
+				return nil
 			}
 			for rawVideoDownloadInfo:= videoDownloadInfos.Front(); rawVideoDownloadInfo!= nil; rawVideoDownloadInfo = rawVideoDownloadInfo.Next() {
 				videoDownloadInfo := (rawVideoDownloadInfo.Value).(*VideoDownloadInfo)
@@ -238,7 +242,9 @@ func DownloadUserAllVideos(mid string) error{
 				}
 				err:= DownloadVideo(videoDownloadInfo.durl, videoDownloadInfo.bvid+videoDownloadInfo.cid+ strconv.Itoa(int(videoDownloadInfo.order)))
 				if err != nil {
-					return err
+					fmt.Println(mid + "DownloadVideo WRONG: dur is " + videoDownloadInfo.durl )
+					fmt.Println(err.Error())
+					return nil
 				}
 			}
 		}
@@ -246,11 +252,26 @@ func DownloadUserAllVideos(mid string) error{
 	return nil
 }
 
-
-func Test() error{
-	err := DownloadUserAllVideos("244353134")
-	return err
+func Filter(videoInfoList *list.List)(*list.List , error){
+	//TODO
+	return videoInfoList,nil
 }
+
+func Test(){
+	req, _ := http.NewRequest("GET", "https://dl.google.com/go/go1.14.2.src.tar.gz", nil)
+	resp, _ := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
+
+	f, _ := os.OpenFile("go1.14.2.src.tar.gz", os.O_CREATE|os.O_WRONLY, 0644)
+	defer f.Close()
+
+	bar := progressbar.DefaultBytes(
+		resp.ContentLength,
+		"downloading",
+	)
+	_, _ = io.Copy(io.MultiWriter(f, bar), resp.Body)
+}
+
 /*
 
 for rawVideoInfo:= videoInfos.Front(); rawVideoInfo!= nil; rawVideoInfo = rawVideoInfo.Next() {
