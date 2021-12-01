@@ -1,0 +1,8 @@
+Makefile
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+*.iml
+tags
+logs/

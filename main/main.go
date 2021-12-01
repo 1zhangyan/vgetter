@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	fmt.Println("***********OPEN SOURCE CODE SOFTWARE**********")
+	fmt.Println("***********OPEN SOURCE PROJECT ***************")
 	fmt.Println("*        FOR LEANING OR COMMUNICATION        *")
 	fmt.Println("*        FORBIDDEN COMMERCIAL PURPOSE        *")
 	fmt.Println("*               VERSION 1.0                  *")
